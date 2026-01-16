@@ -48,13 +48,21 @@ int mount(
              */
 
 
-        libc::mount(
+        let ret = libc::mount(
             source.as_ptr(),
             target.as_ptr(),
             fstype.as_ptr(),
             0,
             data_ptr,
         );
+
+        if ret != 0 {
+            let src = source.as_c_str().to_string_lossy();
+            let tgt = target.as_c_str().to_string_lossy();
+            let typ = fstype.as_c_str().to_string_lossy();
+            let err = std::io::Error::last_os_error();
+            eprintln!("mount failed: {} -> {} (type={}) : {}", src, tgt, typ, err);
+        }
     }
 }
 
@@ -92,7 +100,20 @@ fn main() {
     let argv = [init.as_ptr(), std::ptr::null()];
 
     unsafe {
-        libc::execv(init.as_ptr(), argv.as_ptr());
+        // execv only returns on error
+        if libc::execv(init.as_ptr(), argv.as_ptr()) == -1 {
+            let err = std::io::Error::last_os_error();
+            eprintln!("execv(/sbin/init) failed: {}", err);
+
+            // Try a simple fallback shell so we can inspect the environment
+            let sh = CString::new("/bin/sh").unwrap();
+            let sh_argv = [sh.as_ptr(), std::ptr::null()];
+            if libc::execv(sh.as_ptr(), sh_argv.as_ptr()) == -1 {
+                let err2 = std::io::Error::last_os_error();
+                eprintln!("execv(/bin/sh) also failed: {}", err2);
+                exit(1);
+            }
+        }
     }
 
 
