@@ -18,7 +18,7 @@ fn comandos(entrada: &str, console: &mut File) {
             let pid = unsafe { libc::getpid() };
             writeln!(console, "O PID deste processo é: {}", pid).ok();
         }
-        "bash" => bash(console),
+        "sh" => sh(console),
 
         _ => {
             writeln!(console, "Comando não conhecido ").ok();
@@ -26,44 +26,51 @@ fn comandos(entrada: &str, console: &mut File) {
     }
 }
 
-fn bash(console: &mut File) {
+fn sh(console: &mut File) {
     let pid = unsafe { libc::fork() };
 
-    // filho
     if pid == 0 {
-        if pid == 0 {
-            // FILHO
-            let path = CString::new("/bin/bash").unwrap();
 
-            let argv = [path.as_ptr(), ptr::null()];
+        let path = CString::new("/bin/sh").unwrap();
 
-            let envp = [ptr::null()];
+        let argv = [
+            path.as_ptr(),
+            ptr::null(),
+        ];
 
-            unsafe {
-                libc::execve(path.as_ptr(), argv.as_ptr(), envp.as_ptr());
-            }
+        let envp = [
+            ptr::null(),
+        ];
 
-            // Se execve falhar
-            writeln!(console, "falha ao executar bash").ok();
-            unsafe {
-                libc::_exit(1);
-            }
-        } else if pid > 0 {
-            // PAI (init)
-            unsafe {
-                libc::waitpid(pid, ptr::null_mut(), 0);
-            }
-        } else {
-            writeln!(console, "fork falhou").ok();
+        unsafe {
+            libc::execve(
+                path.as_ptr(),
+                argv.as_ptr(),
+                envp.as_ptr(),
+            );
         }
+
+        // so chega aqui se execve falhar
+        writeln!(console, "falha ao executar /bin/sh").ok();
+        unsafe { libc::_exit(1); }
+
+    } else if pid > 0 {
+        unsafe {
+            libc::waitpid(pid, ptr::null_mut(), 0);
+        }
+
+    } else {
+        writeln!(console, "fork falhou").ok();
     }
 }
+
 
 fn help(console: &mut File) {
     writeln!(console, "Menu de ajuda: ").ok();
     writeln!(console, "clear - limpa a tela").ok();
     writeln!(console, "batata - canta musica da batatinha").ok();
     writeln!(console, "pid - mostra o PID do processo").ok();
+    writeln!(console, "sh - inicia um shell").ok();
 }
 
 fn main() {
