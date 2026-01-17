@@ -3,6 +3,9 @@ use std::io::{Write, Read};
 
 
 fn comandos ( entrada : &str, console: &mut File ) {
+
+    writeln!(console, "").ok();
+
     match entrada {
         "clear" => { writeln!(console, "\x1b[2J\x1b[H").ok(); }
         "?" => help(console),
@@ -34,7 +37,7 @@ fn main() {
     let mut input = String::new();
 
     loop {
-
+        write!(console, "pato@minit:?# ").ok();
         input.clear();
         let mut buf = [0u8; 1];
         while console.read(&mut buf).unwrap() == 1 {
