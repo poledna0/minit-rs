@@ -20,6 +20,13 @@ fn comandos(entrada: &str, console: &mut File) {
         }
         "sh" => sh(console),
 
+        "uptime" => {
+            let mut info: libc::sysinfo = unsafe { std::mem::zeroed() };
+            unsafe { libc::sysinfo(&mut info) };
+
+            writeln!(console, "Uptime: {}", info.uptime).ok();
+        }
+
         _ => {
             writeln!(console, "Comando não conhecido ").ok();
         }
@@ -71,6 +78,8 @@ fn help(console: &mut File) {
     writeln!(console, "batata - canta musica da batatinha").ok();
     writeln!(console, "pid - mostra o PID do processo").ok();
     writeln!(console, "sh - inicia um shell").ok();
+    writeln!(console, "uptime - mostra o tempo em segundos que a maquina esta ligada").ok();
+    
 }
 
 fn main() {
